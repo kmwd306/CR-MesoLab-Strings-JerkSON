@@ -23,6 +23,7 @@ public class ItemParserTest {
 
     @Before
     public void setUp(){
+
         itemParser = new ItemParser();
     }
 
