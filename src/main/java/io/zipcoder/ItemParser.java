@@ -41,7 +41,7 @@ public class ItemParser {
         return item;
     }
 
-    private String findExpirationDate(String rawItem)throws ItemParseException {
+    public String findExpirationDate(String rawItem)throws ItemParseException {
         Pattern checkExpDateRegex = Pattern.compile("\\d\\/\\d+\\/\\d+");
         Matcher regexExpDateMatcher = checkExpDateRegex.matcher(rawItem);
 
@@ -51,7 +51,7 @@ public class ItemParser {
         return null;
     }
 
-    private String findType(String rawItem)throws ItemParseException {
+    public String findType(String rawItem)throws ItemParseException {
         Pattern checkTypeRegex = Pattern.compile("(?<=([Tt][Yy][Pp][Ee][^A-Za-z])).*?(?=[^A-Za-z0])");
         Matcher regexTypeMatcher = checkTypeRegex.matcher(rawItem);
 
@@ -96,23 +96,84 @@ public class ItemParser {
         return new ArrayList<String>(Arrays.asList(inputString.split(stringPattern)));
     }
 
+    public TreeMap<String, ArrayList<Item>> getGroceryMap()throws Exception {
+        Main main = new Main();
 
-    public Map<String, ArrayList<Item>> printGroceries(){
+        ArrayList<String> items = parseRawDataIntoStringArray(main.readRawDataToString());
+
+
+        for(String s: items){
+            try {
+                Item newItem = parseStringIntoItem(s);
+                if (!groceryMap.containsKey(newItem.getName())){
+                    ArrayList<Item> myItemArrayList = new ArrayList<Item>();
+                    myItemArrayList.add(newItem);
+                    groceryMap.put(newItem.getName(), myItemArrayList);
+                } else {
+                    groceryMap.get(newItem.getName()).add(newItem);
+                    }
+            } catch (ItemParseException e){
+                exceptions++;
+            }
+            }
+        return groceryMap;
+    }
+
+
+    public String printGroceries() throws Exception{
+
+        groceryMap = getGroceryMap();
+
+        StringBuilder sb = new StringBuilder();
+
+        //how do I print grocery list
+
+        for(Map.Entry<String, ArrayList<Item>> namesAndItems : groceryMap.entrySet()){
+            String makeUpperCase = namesAndItems.getKey().substring(0,1).toUpperCase() + namesAndItems.getKey().substring(1);
+
+            sb.append("\n" + "name: " + makeUpperCase + "\t\t\t\t" + "seen: " + namesAndItems.getValue().size() + " times");
+            sb.append("\n" + "------------------------------------------");
+
+            ArrayList<Double> getDiffPrices = getDifferentPrices(namesAndItems);
+            for (int i = 0; i < getDiffPrices.size(); i++) {
+                if (getPriceOccurrences(namesAndItems.getValue(), getDiffPrices.get(i)) == 1) {
+                    String time = " time";
+                } else {
+                    String time = " times";
+                    sb.append("\n" + "Price: " + getDiffPrices.get(i) + "\t\t\t\t" + " seen: " + getPriceOccurrences(namesAndItems.getValue(), getDiffPrices.get(i)) + " "+time);
+                    sb.append("\n" + "==========================================");
+                    }
+                }
+
+            }
+        sb.append("\n\n" + "Errors: " + exceptions + " times\n\n");
+        sb.append("\n" + "------------------------------------------");
+        return sb.toString();
+
+
+    }
+
+    private ArrayList<Double> getDifferentPrices(Map.Entry<String, ArrayList<Item>> namesAndItems) {
+
         return null;
+    }
 
+    private boolean getPriceOccurrences(ArrayList<Item> value, Double aDouble) {
+        //retrieve the prices
+
+        return Boolean.parseBoolean(null);
     }
 
 
     //PseudoCode
     //I need to print the grocery list
-    //I should be able to add to the grocery list
-    //I need to be able to return pricesoh
-    //I need to be able to count the exceptions
-    //need a replace method for the C00kies
-    //get key
-    //get value
-    //how to handle if the price field is empty
-    //patterns & matches
+    //I need to be able to return prices - done
+    //I need to be able to count the exceptions - done
+    //need a replace method for the C00kies - done
+    //get key - done
+    //get value - done
+    //how to handle if the price field is empty - done
+    //patterns & matches - done
 
 
 
