@@ -1,21 +1,26 @@
 package io.zipcoder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ItemParser {
+
+
     //to organize my Key/Value pairs
-    private int exceptions = 0;
-    private TreeMap<String, ArrayList<Item>> groceryMap;
+    public static int exceptions = 0;
+    private HashMap<String, ArrayList<Item>> groceryMap;
 
     public ItemParser(){
         //initializing the TreeMap
-        groceryMap = new TreeMap<String, ArrayList<Item>>();
+        groceryMap = new HashMap<String, ArrayList<Item>>();
     }
+
+
+
+
+
+
 
 //splits a string of rawData by ## and puts it into an ArrayList called reponse
     public ArrayList<String> parseRawDataIntoStringArray(String rawData){
@@ -41,7 +46,7 @@ public class ItemParser {
         return item;
     }
 
-    public String findExpirationDate(String rawItem)throws ItemParseException {
+    public String findExpirationDate(String rawItem) {
         Pattern checkExpDateRegex = Pattern.compile("\\d\\/\\d+\\/\\d+");
         Matcher regexExpDateMatcher = checkExpDateRegex.matcher(rawItem);
 
@@ -51,7 +56,7 @@ public class ItemParser {
         return null;
     }
 
-    public String findType(String rawItem)throws ItemParseException {
+    public String findType(String rawItem){
         Pattern checkTypeRegex = Pattern.compile("(?<=([Tt][Yy][Pp][Ee][^A-Za-z])).*?(?=[^A-Za-z0])");
         Matcher regexTypeMatcher = checkTypeRegex.matcher(rawItem);
 
@@ -63,7 +68,7 @@ public class ItemParser {
         return null;
     }
 
-    public String findName(String rawItem)throws ItemParseException{
+    public String findName(String rawItem){
         Pattern checkNameRegex = Pattern.compile("(?<=([Nn][Aa][Mm][Ee][^A-Za-z])).*?(?=[^A-Za-z0])");
         Matcher regexNameMatcher = checkNameRegex.matcher(rawItem);
 
@@ -74,7 +79,7 @@ public class ItemParser {
         return null;
     }
 
-    public String findPrice(String rawItem) throws NumberFormatException{
+    public String findPrice(String rawItem){
         Pattern checkPriceRegex = Pattern.compile("\\d\\.\\d*");
         Matcher regexPriceMatcher = checkPriceRegex.matcher(rawItem);
 
@@ -96,7 +101,11 @@ public class ItemParser {
         return new ArrayList<String>(Arrays.asList(inputString.split(stringPattern)));
     }
 
-    public TreeMap<String, ArrayList<Item>> getGroceryMap()throws Exception {
+
+
+
+    public HashMap<String, ArrayList<Item>> getGroceryMap() throws Exception {
+
         Main main = new Main();
 
         ArrayList<String> items = parseRawDataIntoStringArray(main.readRawDataToString());
@@ -115,53 +124,82 @@ public class ItemParser {
             } catch (ItemParseException e){
                 exceptions++;
             }
-            }
+        }
         return groceryMap;
     }
 
 
     public String printGroceries() throws Exception{
-
         groceryMap = getGroceryMap();
 
         StringBuilder sb = new StringBuilder();
 
-        //how do I print grocery list
-
         for(Map.Entry<String, ArrayList<Item>> namesAndItems : groceryMap.entrySet()){
-            String makeUpperCase = namesAndItems.getKey().substring(0,1).toUpperCase() + namesAndItems.getKey().substring(1);
-
-            sb.append("\n" + "name: " + makeUpperCase + "\t\t\t\t" + "seen: " + namesAndItems.getValue().size() + " times");
-            sb.append("\n" + "------------------------------------------");
-
-            ArrayList<Double> getDiffPrices = getDifferentPrices(namesAndItems);
-            for (int i = 0; i < getDiffPrices.size(); i++) {
-                if (getPriceOccurrences(namesAndItems.getValue(), getDiffPrices.get(i)) == 1) {
-                    String time = " time";
-                } else {
-                    String time = " times";
-                    sb.append("\n" + "Price: " + getDiffPrices.get(i) + "\t\t\t\t" + " seen: " + getPriceOccurrences(namesAndItems.getValue(), getDiffPrices.get(i)) + " "+time);
-                    sb.append("\n" + "==========================================");
-                    }
-                }
-
+            sb.append("\nname: ");
+            sb.append(String.format("%8s",captitalizeFirstLetter(namesAndItems.getKey())));
+            sb.append("\t\t\t\tseen: "+getOccurencesOfItems(namesAndItems.getValue())+" times\n");
+            sb.append("==============="+"\t\t\t\t===============\n");
+            String priceList = generatePriceList(namesAndItems);
+            sb.append(priceList);
+            sb.append("---------------"+"\t\t\t\t---------------\n");
             }
-        sb.append("\n\n" + "Errors: " + exceptions + " times\n\n");
-        sb.append("\n" + "------------------------------------------");
-        return sb.toString();
+
+            sb.append("\nErrors\t\t\t\t\t\tseen: "+exceptions+" times\n");
+
+            return sb.toString();
 
 
     }
 
-    private ArrayList<Double> getDifferentPrices(Map.Entry<String, ArrayList<Item>> namesAndItems) {
 
-        return null;
+    public String generatePriceList(Map.Entry<String, ArrayList<Item>> input) {
+        String priceList = "";
+        ArrayList<Double> nonDupPrices = getDifferentPrices(input);
+        for(int i=0;i<nonDupPrices.size();i++){
+            priceList+="Price";
+            priceList+=(String.format("%10s",nonDupPrices.get(i)));
+            priceList+=("\t\t\t\tseen: "+ getPriceOccurrences(input.getValue(),nonDupPrices.get(i))+
+                    " times\n");
+        }
+        return priceList;
+
     }
 
-    private boolean getPriceOccurrences(ArrayList<Item> value, Double aDouble) {
-        //retrieve the prices
+    public String captitalizeFirstLetter(String input) {
+        return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
+    }
 
-        return Boolean.parseBoolean(null);
+
+    public int getOccurencesOfItems(ArrayList list) {
+        return list.size();
+    }
+
+
+
+
+
+    private ArrayList<Double> getDifferentPrices(Map.Entry<String, ArrayList<Item>> items) {
+
+        ArrayList<Double> differentPrices = new ArrayList<Double>();
+
+        for(int i =0; i<items.getValue().size(); i++){
+            if(!differentPrices.contains(items.getValue().get(i).getPrice())){
+                differentPrices.add(items.getValue().get(i).getPrice());
+            }
+        }
+
+        return differentPrices;
+    }
+
+    private int getPriceOccurrences(ArrayList<Item> value, Double aDouble) {
+        int price = 0;
+
+        for(int i = 0; i<value.size(); i++){
+            if(value.get(i).getPrice().equals(aDouble)){
+                price++;
+            }
+        }
+        return price;
     }
 
 
